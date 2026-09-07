@@ -1068,7 +1068,7 @@ describe('Unit testing of Serialize', () => {
       });
     });
 
-    it('should map NumericDecay.decay onto the proto decayValue field', () => {
+    it('should serialize a NumericDecay boost to the full proto shape with decay mapped to decayValue', () => {
       const out = Serialize.boostGRPC({
         conditions: [
           {
@@ -1083,7 +1083,23 @@ describe('Unit testing of Serialize', () => {
           },
         ],
       });
-      expect(out.conditions[0].numericDecay?.decayValue).toEqual(0.5);
+      expect(out).toEqual({
+        weight: undefined,
+        depth: undefined,
+        conditions: [
+          {
+            weight: undefined,
+            numericDecay: {
+              property: 'rating',
+              origin: 0,
+              scale: 10,
+              offset: undefined,
+              curve: Boost_DecayCurve.DECAY_CURVE_LINEAR,
+              decayValue: 0.5,
+            },
+          },
+        ],
+      });
     });
   });
 });
