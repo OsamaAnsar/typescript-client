@@ -16,6 +16,8 @@ export type BackupStatusReturn = {
   status: BackupStatus;
   /** Size of the backup in Gibs */
   size?: number;
+  /** The ID of the base backup this incremental backup was built on; absent when the backup is not incremental. */
+  incrementalBaseBackupId?: string;
 };
 
 /** The return type of a backup creation or restoration operation */

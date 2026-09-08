@@ -18,6 +18,7 @@ import {
 import {
   BackupCreateResponse,
   BackupCreateStatusResponse,
+  BackupListResponse,
   BackupRestoreResponse,
 } from '../../openapi/types.js';
 import {
@@ -47,6 +48,8 @@ export const backup = (connection: Connection): Backup => {
       error: res.error,
       path: res.path,
       status: res.status,
+      incrementalBaseBackupId:
+        'incremental_base_backup_id' in res ? res.incremental_base_backup_id : undefined,
     };
   };
   const parseResponse = (res: BackupCreateResponse | BackupRestoreResponse): BackupReturn => {
@@ -213,7 +216,12 @@ export const backup = (connection: Connection): Backup => {
       if (opts?.startedAtAsc) {
         url += '?order=asc';
       }
-      return connection.get<BackupReturn[]>(url);
+      return connection.get<BackupListResponse>(url).then((backups) =>
+        (backups ?? []).map((backup) => ({
+          ...(backup as unknown as BackupReturn),
+          incrementalBaseBackupId: backup.incremental_base_backup_id,
+        }))
+      );
     },
   };
 };

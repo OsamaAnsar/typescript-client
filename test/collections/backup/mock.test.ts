@@ -66,7 +66,21 @@ class CancelMock {
           backend: BACKEND,
           path: 'path/to/backup',
           status: CancelMock.status,
+          incremental_base_backup_id: 'base-backup-001',
         })
+    );
+
+    // Backup list endpoint
+    httpApp.get(`/v1/backups/${BACKEND}`, (req, res) =>
+      res.send([
+        { id: 'full-backup', classes: ['A'], status: 'SUCCESS' },
+        {
+          id: 'incremental-backup',
+          classes: ['A'],
+          status: 'SUCCESS',
+          incremental_base_backup_id: 'full-backup',
+        },
+      ])
     );
 
     // Backup restoration endpoint
@@ -182,6 +196,17 @@ describe('Mock testing of backup cancellation', () => {
       operation: 'restore',
     });
     expect(success).toBe(false);
+  });
+
+  it('should surface incrementalBaseBackupId from the creation status', async () => {
+    const status = await client.backup.getCreateStatus({ backupId: BACKUP_ID, backend: BACKEND });
+    expect(status.incrementalBaseBackupId).toBe('base-backup-001');
+  });
+
+  it('should surface incrementalBaseBackupId when listing backups', async () => {
+    const backups = await client.backup.list(BACKEND);
+    expect(backups.find((b) => b.id === 'full-backup')?.incrementalBaseBackupId).toBeUndefined();
+    expect(backups.find((b) => b.id === 'incremental-backup')?.incrementalBaseBackupId).toBe('full-backup');
   });
 
   afterAll(() => mock.close());
